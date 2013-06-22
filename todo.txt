@@ -9,6 +9,7 @@
 x Bug fix: Create settings properly on plugin activation
 x Bug fix: Mijnpress framework - Updated to roles, Error: "has_cap was called with an argument that is deprecated since version 2.0!"
 
+- Misc: Separate logic from presentation by introducing templates
 - Misc: CSS Fixes
 x Misc: Move configuration to Settings admin menu
 - Misc: Update WP core functions usage where applicable

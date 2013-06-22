@@ -3,7 +3,7 @@
 Plugin Name: Warm cache
 Plugin URI: http://www.mijnpress.nl
 Description: Crawls your website-pages based on google XML sitemap (google-sitemap-generator). If you have a caching plugin this wil keep your cache warm. Speeds up your site.
-Version: 1.8
+Version: 2.0
 Author: Ramon Fincken, Stanislav Khromov
 Author URI: http://www.mijnpress.nl
 */
@@ -21,6 +21,7 @@ class warm_cache extends mijnpress_plugin_framework
 	public $google_sitemap_generator_options;
 	public $sitemap_url;
 	public $keep_time;
+	public $template;
 	
 	/**
 	 * Activation function
@@ -60,18 +61,19 @@ class warm_cache extends mijnpress_plugin_framework
 		 */
 		$warm_cache_admin = new warm_cache();
 		$warm_cache_admin->plugin_title = 'Warm cache';
-		if(!$warm_cache_admin->configuration_check())
-		{
-			$warm_cache_admin->content_start();
-
-			$msg = '<strong>You need to install the Google XML sitemap plugin<br/>';
-			$msg .= 'Download the zipfile from <a href="http://wordpress.org/extend/plugins/google-sitemap-generator/">http://wordpress.org/extend/plugins/google-sitemap-generator/</a><br/>';
-			$msg .= 'Or use <a href="./plugin-install.php">plugin-install.php</a> to search for "google sitemap generator"</strong>';
-			$warm_cache_admin->show_message($msg);
-
-			$warm_cache_admin->content_end();
-		}
-		else
+		
+		/**
+		 * Template engine
+		 */
+		if(!class_exists('MicroTemplate') && !class_exists('MT'))
+			include('lib/microtemplate.class.php');
+		
+		//Register template directory by getting directory of current file
+		$warm_cache_admin->template = new MicroTemplate(dirname(__FILE__).'/templates/');
+		
+		//FIXME: Continue here
+		//Check that everything is working out for us
+		if($warm_cache_admin->configuration_check())
 		{
 			$warm_cache_admin->content_start();
 			$stats = $warm_cache_admin->get_stats();
@@ -162,23 +164,17 @@ class warm_cache extends mijnpress_plugin_framework
 	private function configuration_check()
 	{
 		$this->google_sitemap_generator_options = get_option("sm_options");
-		
-		if(!($this->google_sitemap_generator_options && is_array($this->google_sitemap_generator_options))) {
-			$msg = __('Could not find sitemap options, did you install and configure google-sitemap-generator ?','plugin_warm_cache');
-			$returnvar = false;
+
+		if(!is_plugin_active('google-sitemap-generator/sitemap.php'))
+		{
+			$this->show_message($this->template->t('prompt/install-sitemap-generator'));
+			return false;
 		}
 		else
 		{
-			$msg = __('OK, google-sitemap-generator has been installed','plugin_warm_cache');
-			$msg .= '<br><br>';
-			$msg .= 'Sitemap url: <a href="'.warm_cache::get_sitemap_url().'">'.$this->sitemap_url.'</a><br/>';
-			$warm_cache_api_url = trailingslashit(get_bloginfo('url')).'?warm_cache='.get_option('plugin_warm_cache_api');
-			$msg .= 'The url you shoul call from a cronjob is: '.$warm_cache_api_url;
-			$returnvar = true;
+			$this->show_message($this->template->t('prompt/configuration-check-ok', array('sitemap_url' => warm_cache::get_sitemap_url(), 'cron_url' => trailingslashit(get_bloginfo('url')).'?warm_cache='.get_option('plugin_warm_cache_api'))));
+			return true;
 		}
-		$this->show_message($msg);
-
-		return $returnvar;
 	}
 
 	public function get_sitemap_url()
