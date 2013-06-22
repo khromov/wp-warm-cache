@@ -63,8 +63,11 @@ class mijnpress_plugin_framework
     /**
      * Left menu display in Plugin menu
      * @author     Ramon Fincken
+	 * 
+	 * DEPRECATED, do not use
      */
-    function addPluginSubMenu($title,$function, $file, $capability = 10, $where = "plugins.php") {
+    function addPluginSubMenu($title, $function, $file, $capability = 10, $where = "plugins.php")
+    {
     	add_submenu_page($where, $title, $title, $capability, $file, $function);
     }
 
@@ -95,22 +98,20 @@ class mijnpress_plugin_framework
     }
 
     /**
-     * Checks if user is admin or has plugin caps.
+     * Checks if user is admin
      */
 	function is_admin()
 	{
+		require_once(ABSPATH . WPINC . '/pluggable.php');
+		
 		if(is_multisite())
 		{
-			// TODO fix this, for now rely on WP roles ( I have tested this 07062011 )
-			return true;
+			return is_super_admin();
 		}		
-		
-		require_once(ABSPATH . WPINC . '/pluggable.php');
-		$current_user = wp_get_current_user();
-		$current_user_id = ! empty($current_user) ? $current_user->id : 0;
-		$current_user = new WP_User($current_user_id);
-		if($current_user->has_cap('delete_users')) return true;
-		return false;
+		else
+		{
+			return current_user_can('manage_options');
+		}
 	}	
 
     /**

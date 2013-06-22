@@ -22,6 +22,18 @@ class warm_cache extends mijnpress_plugin_framework
 	public $sitemap_url;
 	public $keep_time;
 	
+	/**
+	 * Activation function
+	 */
+	static function activate()
+	{
+		//Create stats data 
+		add_option('plugin_warm_cache_statdata', array());
+		
+		//Generate a random API password without special characters
+		add_option('plugin_warm_cache_api', wp_generate_password(9, false));
+	}
+	
 	function warm_cache()
 	{
 		$this->keep_time = 60*60*24*7; // 7 days for now (TODO: admin setting)
@@ -29,7 +41,7 @@ class warm_cache extends mijnpress_plugin_framework
 
 	function addPluginSubMenu()
 	{
-		parent::addPluginSubMenu('Warm cache',array('warm_cache', 'admin_menu'),__FILE__);
+		add_submenu_page('options-general.php', __("Warm cache"), __("Warm cache"), 'manage_options', 'warm_cache', array('warm_cache', 'admin_menu'));
 	}
 
 	/**
@@ -37,13 +49,15 @@ class warm_cache extends mijnpress_plugin_framework
 	 */
 	function addPluginContent($links, $file)
 	{
-		$links = parent::addPluginContent('warm_cache/warm-cache.php',$links,$file);
+		$links = parent::addPluginContent('warm_cache/warm-cache.php', $links, $file);
 		return $links;
 	}
 
 	public function admin_menu()
 	{
-		load_plugin_textdomain('plugin_warm_cache','/wp-content/plugins/warm-cache/language/');		
+		/**
+		 * Where the main plugin function is created
+		 */
 		$warm_cache_admin = new warm_cache();
 		$warm_cache_admin->plugin_title = 'Warm cache';
 		if(!$warm_cache_admin->configuration_check())
@@ -94,14 +108,9 @@ class warm_cache extends mijnpress_plugin_framework
 	*/
 	private function get_stats()
 	{
+		//Stats data and API key are always present at this point due to  activate(), no need to check.
 		$statdata = get_option('plugin_warm_cache_statdata');
-		if(!isset($statdata) || !is_array($statdata))
-		{
-			add_option('plugin_warm_cache_statdata', array(), NULL, 'no');
-			$special_chars = false;
-			add_option('plugin_warm_cache_api',wp_generate_password(9, $special_chars));
-		}
-
+		
 		$table_string = '';
 		if(!count($statdata))
 		{
@@ -183,7 +192,10 @@ class warm_cache extends mijnpress_plugin_framework
 		return $this->sitemap_url;
 	}
 }
-	
+
+/**
+ * Plugin registration
+ */
 if(isset($_GET['warm_cache']) && !empty($_GET['warm_cache']) && $_GET['warm_cache'] == get_option('plugin_warm_cache_api'))
 {
 	define('CALLED',true);
@@ -193,6 +205,12 @@ else
 {
 	if(is_admin())
 	{
+		/**
+		 * Register hooks, languages etc
+		 **/
+		register_activation_hook( __FILE__, array( 'warm_cache', 'activate' ) );
+		load_plugin_textdomain('plugin_warm_cache', false, basename( dirname( __FILE__ ) ) . '/languages' );
+		
 		add_action('admin_menu',  array('warm_cache', 'addPluginSubMenu'));
 		add_filter('plugin_row_meta',array('warm_cache', 'addPluginContent'), 10, 2);
 	}
