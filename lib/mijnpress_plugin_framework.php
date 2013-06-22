@@ -122,7 +122,7 @@ class mijnpress_plugin_framework
      */
     function show_message($msg)
     {
-        echo '<div id="message" class="updated fade">';
+        echo '<div id="message" class="updated fade" style="margin: 10px 0; padding: 0 10px;">';
         echo $msg;
         echo '</div>';
     }
@@ -149,7 +149,7 @@ class mijnpress_plugin_framework
         	echo '<br/><br/>Do you like this plugin? <a href="http://donate.ramonfincken.com/">PayPal Donations</a> (even as small as $1,- or &euro;1,)- are welcome!.';
         }
         echo '</div>';
-        echo '<div style="width:20%; float: right; margin-right: 10px;">';
+        echo '<div style="width:22%; float: right; margin-right: 10px; margin-top: 10px;">';
         $this->showcredits();
         echo '</div>';
         
@@ -218,7 +218,7 @@ function mijnpress_plugin_framework_showcredits_framework()
 {
 ?>
     <div class="postbox">
-        <h3 class="hndle"><span>Are you a developer?</span></h3>
+        <h3 class="hndle" style="padding: 10px;"><span>Are you a developer?</span></h3>
         <div class="inside">
             Feel free to use the framework file included in this plugin.<br>
             It is open source and free to use.<br/>
@@ -233,12 +233,21 @@ function mijnpress_plugin_framework_showcredits($plugin_title,$all_plugins)
 {
 ?>
     <div class="postbox">
-        <h3 class="hndle"><span>About <?php echo $plugin_title; ?></span></h3>
+        <h3 class="hndle" style="padding: 10px;"><span>About <?php echo $plugin_title; ?></span></h3>
         <div class="inside">
-            This plugin was created by Ramon Fincken.<br>
+            This plugin was created by Ramon Fincken.<br><br/>
+            
 He likes to create WordPress websites and plugins (currently only Dutch customers) and he is co-admin at the <a href="http://www.linkedin.com/groups?about=&gid=1644947&trk=anet_ug_grppro">Dutch LinkedIn WordPress group</a>.<br/><br/>Visit his WordPress website at: <a href="http://www.mijnpress.nl">MijnPress.nl</a><br/>
 If you are a coder, you might like to visit <a href="http://www.ramonfincken.com/tag/wordpress.html">his WordPress blogposts</a>.
-<br/><br/><a href="http://pluginsupport.mijnpress.nl">Is this plugin broken? Report it here</a>            
+<br/><br/>
+			 <strong>
+			 	Additional coding by
+			 	<br/>
+			 	<a href="http://khromov.wordpress.com/about/">Stanislav Khromov</a>
+			 </strong>
+			 <br/><br/>
+	
+			<a href="http://pluginsupport.mijnpress.nl">Is this plugin broken? Report it here</a>            
         </div>
     </div>
 <?php 
@@ -247,7 +256,7 @@ if(is_array($all_plugins) && count($all_plugins) > 0)
 ?>
 
     <div class="postbox">
-        <h3 class="hndle"><span>More Plugins</span></h3>
+        <h3 class="hndle" style="padding: 10px;"><span>More Plugins</span></h3>
         <div class="inside">
             If you like this plugin, you may also like:<br/>
 <ul>

@@ -2,10 +2,9 @@
 /**
 * Part of WordPress Plugin: Warm cache
 * Based on script from : http://blogs.tech-recipes.com/johnny/2006/09/17/handling-the-digg-effect-with-wordpress-caching/
-* 
-* TODO: Return values as XML or 
 */
-if(defined('CALLED'))
+
+if(defined('WC_CALLED'))
 {	
 	$warm_cache = new warm_cache();
 	$warm_cache->google_sitemap_generator_options = get_option("sm_options");
@@ -17,6 +16,11 @@ if(defined('CALLED'))
 	
 	@set_time_limit(0);
 	
+	/**
+	 * Why is this needed?
+	 * 
+	 * TODO: Find out and remove if found unnecessary.
+	 */
 	if (extension_loaded('zlib'))
 	{
 		$z = strtolower(ini_get('zlib.output_compression'));
@@ -27,29 +31,22 @@ if(defined('CALLED'))
 	}
 
 	if (file_exists('./wp-load.php')) 
-	{
 		require_once ('./wp-load.php');
-	}
 
 	// Get url
 	$sitemap_url = $warm_cache->get_sitemap_url();
-	// Override here if needed
 
 	// For stats
 	$statdata = get_option('plugin_warm_cache_statdata');
 	if(!isset($statdata) || !is_array($statdata))
-	{
 		add_option('plugin_warm_cache_statdata', array(), NULL, 'no');
-	}
 
 	$newstatdata = array();
 	$keep_time = 60*60*24*7; // 7 days for now (TODO: admin setting)
 	foreach($statdata as $key => $value)
 	{
 		if($key >= time()-$keep_time)
-		{
 			$newstatdata[$key] = $value;
-		}
 	}
 	
 	$newtime = time();
@@ -69,9 +66,10 @@ if(defined('CALLED'))
 		$cnt = count($xml->url);
 		if($cnt > 0)
 		{
-			for($i = 0;$i < $cnt;$i++){
+			for($i = 0;$i < $cnt;$i++)
+			{
 				$page = (string)$xml->url[$i]->loc;
-				echo '<br/>Busy with: '.$page;
+				echo 'Busy with: '.$page.'<br/>';
 				$newvalue['pages'][] = $page;
 				$tmp = wp_remote_get($page);
 			}
@@ -84,17 +82,16 @@ if(defined('CALLED'))
 			{
 				for($i = 0;$i < $cnt;$i++){
 					$sub_sitemap_url = (string)$xml->sitemap[$i]->loc;
-					echo "<br/>Start with submap: ".$sub_sitemap_url;
+					echo "Start with submap: ".$sub_sitemap_url . "<br/>";
 					mp_process_sitemap($sub_sitemap_url);
 				}				
 			}
 		}
 	}
 	
-	// GOGOGO!
 	mp_process_sitemap($sitemap_url);
 	
-	echo '<br><br><strong>Done!</strong>';	
+	echo '<br><strong>Done!</strong>';	
 
 	$mtime = microtime();
 	$mtime = explode(" ", $mtime);
@@ -112,6 +109,6 @@ if(defined('CALLED'))
 	set_transient($newkey, $newvalue, $keep_time);
 	$newstatdata[$newtime] = $newkey;
 
-	update_option('plugin_warm_cache_statdata',$newstatdata);
-	die();
+	update_option('plugin_warm_cache_statdata', $newstatdata);
+	die(); //Stop rest of WP load TODO: Possible to do cleaner?
 }

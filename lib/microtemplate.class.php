@@ -1,10 +1,14 @@
 <?php	
 	/**
 	 * OOP version of php-microtemplate
+	 * 
+	 * Version 2
+	 * - Added support for nested templates from any template through $v['_template']
+	 * 
 	 * For more information see:
 	 * http://khromov.wordpress.com/2012/08/09/micro-templates-for-rapid-web-design-prototyping-and-development-in-php/
 	 **/
-	class MicroTemplate
+	class MicroTemplate_v2
 	{
 		private $prefix;
 		private $suppress_errors;
@@ -39,6 +43,16 @@
 		
 		function build($template, $v, $prefix)
 		{
+			//Add support for nested templates.
+			//FIXME: Non-array $v can't do nested templates
+			//TODO: Make this nicer, OOP
+			
+			/** Attach template class to array or object **/
+			if(is_array($v))
+				$v['_template'] = &$this;
+			if(is_object($v))
+				$v->_template = &$this;
+			
 			ob_start();
 
 			if(file_exists($prefix.$template.'.php'))
@@ -75,13 +89,13 @@
 	 * Less flexible but easier to type:
 	 * MT::t('template-name');
 	 **/
-	class MT
+	class MT_v2
 	{
 		private $MicroTemplateInstance;
 		
 		function t($template, $v, $prefix = 'templates/', $suppress_errors = true, $rewrite_short_tags = true)
 		{
-			$t = new MicroTemplate($prefix, $suppress_errors, $rewrite_short_tags);
+			$t = new MicroTemplate_v2($prefix, $suppress_errors, $rewrite_short_tags);
 			return $t->template($template, $v, $prefix);			
 		}	
 	}
