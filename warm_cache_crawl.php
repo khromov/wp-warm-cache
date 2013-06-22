@@ -2,6 +2,8 @@
 /**
 * Part of WordPress Plugin: Warm cache
 * Based on script from : http://blogs.tech-recipes.com/johnny/2006/09/17/handling-the-digg-effect-with-wordpress-caching/
+* 
+* TODO: Return values as XML or 
 */
 if(defined('CALLED'))
 {	
@@ -15,7 +17,8 @@ if(defined('CALLED'))
 	
 	@set_time_limit(0);
 	
-	if (extension_loaded('zlib')) {
+	if (extension_loaded('zlib'))
+	{
 		$z = strtolower(ini_get('zlib.output_compression'));
 		if ($z == false || $z == 'off')
 		{
@@ -48,6 +51,7 @@ if(defined('CALLED'))
 			$newstatdata[$key] = $value;
 		}
 	}
+	
 	$newtime = time();
 	$newkey = 'plugin_warm_cache'.$newtime;
 
@@ -86,12 +90,11 @@ if(defined('CALLED'))
 			}
 		}
 	}
+	
 	// GOGOGO!
 	mp_process_sitemap($sitemap_url);
 	
-	
-	echo '<br><br><strong>Done!</strong>';
-	
+	echo '<br><br><strong>Done!</strong>';	
 
 	$mtime = microtime();
 	$mtime = explode(" ", $mtime);
@@ -112,4 +115,3 @@ if(defined('CALLED'))
 	update_option('plugin_warm_cache_statdata',$newstatdata);
 	die();
 }
-?>

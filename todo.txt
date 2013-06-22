@@ -1,0 +1,11 @@
+=== Todo list for version 1.8 ===
+- Feature: Select output format of warm_cache_crawl.php (Plain as now, XML or JSON)
+- Feature: Manual Sitemap URL (setting)
+- Feature: Selecting the max age of posts to refresh (Useful for sites with a lot of old content, where caching would be impractical) (setting)
+- Feature: Selecting posts/pages that are -always- cached (by id, or perhaps slug (comma-separated for now)) (setting)
+- Feature: Checkbox: "Always cache pages" (setting)
+
+- Bug fix: Create settings properly on plugin activation
+
+- Misc: CSS Fixes
+- Misc: Move configuration to Settings admin menu
