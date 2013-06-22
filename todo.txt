@@ -17,3 +17,6 @@ x Misc: Move configuration to Settings admin menu
 Legend
 - Not fixed
 x Fixed
+
+=== Todo list for future versions ===
+- Full localization support
