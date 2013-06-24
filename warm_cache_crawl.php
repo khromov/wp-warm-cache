@@ -38,6 +38,7 @@ if(defined('WC_CALLED'))
 
 	// For stats
 	$statdata = get_option('plugin_warm_cache_statdata');
+	
 	if(!isset($statdata) || !is_array($statdata))
 		add_option('plugin_warm_cache_statdata', array(), NULL, 'no');
 
@@ -91,7 +92,12 @@ if(defined('WC_CALLED'))
 	
 	mp_process_sitemap($sitemap_url);
 	
-	echo '<br><strong>Done!</strong>';	
+	?>
+		<br/>
+		<strong>
+			Done!
+		</strong>
+	<?php	
 
 	$mtime = microtime();
 	$mtime = explode(" ", $mtime);
@@ -110,5 +116,6 @@ if(defined('WC_CALLED'))
 	$newstatdata[$newtime] = $newkey;
 
 	update_option('plugin_warm_cache_statdata', $newstatdata);
+	
 	die(); //Stop rest of WP load TODO: Possible to do cleaner?
 }
