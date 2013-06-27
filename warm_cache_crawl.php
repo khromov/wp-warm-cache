@@ -9,29 +9,16 @@ if(defined('WC_CALLED'))
 	$warm_cache = new warm_cache();
 	$warm_cache->google_sitemap_generator_options = get_option("sm_options");
 
-	$mtime = microtime();
-	$mtime = explode(' ', $mtime);
-	$mtime = $mtime[1] + $mtime[0];
-	$starttime = $mtime;
+	$timer = new warm_cache_timer();
+	$timer->start();
+	
+	//FIXME: Export output type. Add options to select
+	$output_format = 'xml';
 	
 	@set_time_limit(0);
 	
-	/**
-	 * Why is this needed?
-	 * 
-	 * TODO: Find out and remove if found unnecessary.
-	 */
-	if (extension_loaded('zlib'))
-	{
-		$z = strtolower(ini_get('zlib.output_compression'));
-		if ($z == false || $z == 'off')
-		{
-			ob_start('ob_gzhandler');
-		}
-	}
-
-	if (file_exists('./wp-load.php')) 
-		require_once ('./wp-load.php');
+	//FIXME: Why?
+	$warm_cache->enable_gzip();
 
 	// Get url
 	$sitemap_url = $warm_cache->get_sitemap_url();
@@ -58,59 +45,13 @@ if(defined('WC_CALLED'))
 	$newvalue['time_start'] = $newtime;
 	$newvalue['pages'] = array();
 	
-	function mp_process_sitemap($sitemap_url)
-	{
-		global $newvalue;
-		$xmldata = wp_remote_retrieve_body(wp_remote_get($sitemap_url));
-		$xml = simplexml_load_string($xmldata);
+	$crawl_data = $warm_cache->process_sitemap($sitemap_url, $output_format);
 	
-		$cnt = count($xml->url);
-		if($cnt > 0)
-		{
-			for($i = 0;$i < $cnt;$i++)
-			{
-				$page = (string)$xml->url[$i]->loc;
-				echo 'Busy with: '.$page.'<br/>';
-				$newvalue['pages'][] = $page;
-				$tmp = wp_remote_get($page);
-			}
-		}
-		else
-		{
-			// Sub sitemap?
-			$cnt = count($xml->sitemap);
-			if($cnt > 0)
-			{
-				for($i = 0;$i < $cnt;$i++){
-					$sub_sitemap_url = (string)$xml->sitemap[$i]->loc;
-					echo "Start with submap: ".$sub_sitemap_url . "<br/>";
-					mp_process_sitemap($sub_sitemap_url);
-				}				
-			}
-		}
-	}
+	echo $warm_cache->template->show("cron/{$output_format}", array('crawl_data' => $crawl_data, 'elapsed_time' => $timer->get(8)));
 	
-	mp_process_sitemap($sitemap_url);
-	
-	?>
-		<br/>
-		<strong>
-			Done!
-		</strong>
-	<?php	
 
-	$mtime = microtime();
-	$mtime = explode(" ", $mtime);
-	$mtime = $mtime[1] + $mtime[0];
-	$endtime = $mtime;
-	$totaltime = ($endtime - $starttime);
-	$cnt = count($newvalue['pages']);
-	$returnstring = 'Crawled '.$cnt. ' pages in ' .$totaltime. ' seconds.';
-	echo '<br>'. $returnstring;
-
-	$newvalue['pages_count'] = $cnt;
-	$newvalue['time'] = $totaltime;
-
+	$newvalue['pages_count'] = sizeof($crawl_data);
+	$newvalue['time'] = $timer->get(2);
 
 	set_transient($newkey, $newvalue, $keep_time);
 	$newstatdata[$newtime] = $newkey;

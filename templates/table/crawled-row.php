@@ -1,15 +1,15 @@
 <tr>
 	<td valign="top">
-		<?=date('l jS F Y h:i:s A', $v['time_start'])?>
+		<?=date('l jS F Y h:i:s A', $time_start)?>
 	</td>
 	<td valign="top" style="text-align: center;">
-		<?=round($v['time'], 2)?>s
+		<?=round($time, 2)?>s
 	</td>
 	<td valign="top">
-		<?=$v['pages_count']?>
+		<?=$pages_count?>
 	</td>
 	<td valign="top">
-		<?=(intval($v['pages_count'])!=0) ? round($v['time'] / $v['pages_count'], 2).'s' : '-'?>
+		<?=(intval($pages_count)!=0) ? round($time / $pages_count, 2).'s' : '-'?>
 	</td>
 	<!--
 	<td valign="top">

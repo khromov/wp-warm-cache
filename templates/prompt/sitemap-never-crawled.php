@@ -1,11 +1,14 @@
-Ok, we have detected your sitemap url but it has not been visited by the plugin\'s crawler.
+<?=__('Ok, we have detected your sitemap url but it has not been visited by the plugin\'s crawler.')?>
 <br/>
-This plugin will not work standalone.
+<?=__('This plugin will not work standalone.')?>
 <br/>
 <strong>
-	You need to set up a wget or curl cron job from your webhost every hour.
+	<?=__('You need to set up a wget or curl cron job from your webhost every hour.')?>
 </strong>
-<br/><br/>
-The url you should call with wget or curl is:
 <br/>
-<?=$v['warm_cache_api_url']?>
+
+<?=__('The url you should call from your cron job with wget or curl is:')?>
+<br/>
+<a href="<?=$cron_url?>">
+	<?=$cron_url?>
+</a>

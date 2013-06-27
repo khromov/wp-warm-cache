@@ -3,7 +3,7 @@
 	 * OOP version of php-microtemplate
 	 * 
 	 * Version 2
-	 * - Added support for nested templates from any template through $v['_template']
+	 * - Added support for nested templates from any template through $template->t();
 	 * 
 	 * For more information see:
 	 * http://khromov.wordpress.com/2012/08/09/micro-templates-for-rapid-web-design-prototyping-and-development-in-php/
@@ -33,29 +33,40 @@
 			return $this->build($template, $v, $this->prefix);
 		}
 		
-		/**
-		 * Shorthand for template()
-		 **/
-		function t($template, $v = array(), $prefix = null)
+		function build($template_name, $_v, $prefix)
 		{
-			return $this->template($template, $v, $prefix);
-		}
-		
-		function build($template, $v, $prefix)
-		{
-			//Add support for nested templates.
 			//FIXME: Non-array $v can't do nested templates
-			//TODO: Make this nicer, OOP
-			
+						
 			/** Attach template class to array or object **/
+			/*
 			if(is_array($v))
 				$v['_template'] = &$this;
 			if(is_object($v))
-				$v->_template = &$this;
+				$v->_template = &$this; //TODO: Check
+			*/
+			
+			/** Set variables from $v array as actual variables. **/
+			//if(!$this->is_associative_array($v))
+			
+			/**
+			 * http://davidwalsh.name/convert-key-value-arrays-standard-variables-php
+			 * 
+			 * TODO: Check for edge cases. what happens if you enter a string? Or other weird stuff.
+			 */
+			foreach($_v as $key => $value)
+				${$key} = $value; //$$key = $value;
+			
+			/** 
+			 * Attach template class as variable $t - allows for OOP-fashion nested templating 
+			 * 
+			 * NOTE: This overrides any 'template' array key that was sent in $_v. 
+			 **/
+			
+			$template = &$this;
 			
 			ob_start();
 
-			if(file_exists($prefix.$template.'.php'))
+			if(file_exists($prefix.$template_name.'.php'))
 			{
 				if(($this->short_open_tag_enabled() === false))
 				{
@@ -64,13 +75,13 @@
 				}
 				else
 				{
-					include($prefix.$template.'.php');
+					include($prefix.$template_name.'.php');
 				}
 			}
 			else
 			{
 				if(!$this->suppress_errors)
-					throw new Exception('Template file '. $prefix . $template .'.php does not exist.');	
+					throw new Exception('Template file '. $prefix . $template_name .'.php does not exist.');	
 				
 				//If suppress_errors = true, don't do anything
 			}		
@@ -78,10 +89,49 @@
 			return ob_get_clean();			
 		}
 		
+		/** Shorthand functions **/
+		
+		/**
+		 * Alternative shorthand for template()
+		 **/
+		function t($template, $v = array(), $prefix = null)
+		{
+			return $this->template($template, $v, $prefix);
+		}
+		
+		/**
+		 * Alternative function for template()
+		 **/
+		function show($template, $v = array(), $prefix = null)
+		{
+			return $this->template($template, $v, $prefix);
+		}
+		
+		/**
+		 * Alternative function for template()
+		 **/
+		function display($template, $v = array(), $prefix = null)
+		{
+			return $this->template($template, $v, $prefix);
+		}
+		
+		/** Helper functions **/
+		
+		/**
+		 * Checks if short_open_tag is enabled
+		 */
 		function short_open_tag_enabled()
 		{
 			return (bool)@ini_get('short_open_tag');
 		}
+		
+		/**
+		 * http://stackoverflow.com/questions/173400/php-arrays-a-good-way-to-check-if-an-array-is-associative-or-numeric/4254008#4254008
+		 */
+		function is_associative_array($array)
+		{
+			return (bool)count(array_filter(array_keys($array), 'is_string'));
+		}	
 	}
 	
 	/**
