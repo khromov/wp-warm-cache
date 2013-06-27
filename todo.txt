@@ -1,9 +1,10 @@
 === Todo list for version 2.0 ===
-- Feature: Selecting the max age of posts to refresh (Useful for sites with a lot of old content, where caching would be impractical) (setting)
-- Feature: Selecting posts/pages that are -always- cached (by URL) (setting)
-- Feature: Set your own API key
-- Feature: Always cache front page checkbox (setting)
-- Feature: Select output format of warm_cache_crawl.php (Plain HTML, XML or JSON)
+x Feature: Selecting the max age of posts to refresh (Useful for sites with a lot of old content, where caching would be impractical) (setting)
+x Feature: Selecting posts/pages that are -always- cached (by URL) (setting)
+x Feature: Set your own API key (setting)
+x Feature: Always cache front page checkbox (setting)
+x Feature: Select output format of warm_cache_crawl.php (Plain HTML, XML or JSON)
+- Misc: Settings page for the above logic
 
 x Bug fix: Create settings properly on plugin activation
 x Bug fix: Mijnpress framework - Updated to roles, Error: "has_cap was called with an argument that is deprecated since version 2.0!"
@@ -19,8 +20,8 @@ x Misc: Update WP core functions usage where applicable
 - Feature: Full localization support
 - Feature: Manual Sitemap URL (setting)
 
-- Feature: Remove sitemap dependency and query for posts from MySQL via $wpdb instead.
-- Feature: Checkbox: "Always cache pages" (setting)
+- Feature: Remove sitemap plugin dependency and query for posts from MySQL via $wpdb instead.
+- Feature: Checkbox: "Always cache post type X" (setting)
 
 === Legend ===
 x => Fixed

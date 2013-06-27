@@ -134,7 +134,7 @@ class mijnpress_plugin_framework
      */
     function content_start()
     {
-        echo '<div style="width:75%; float: left;">';
+        //echo '<div style="width:75%; float: left;">';
     }
 
     /**
@@ -144,11 +144,13 @@ class mijnpress_plugin_framework
      */
     function content_end()
     {
+    	/*
         if($this->showcredits)
         {
         	echo '<br/><br/>Do you like this plugin? <a href="http://donate.ramonfincken.com/">PayPal Donations</a> (even as small as $1,- or &euro;1,)- are welcome!.';
         }
         echo '</div>';
+		*/
         echo '<div style="width:22%; float: right; margin-right: 10px; margin-top: 10px;">';
         $this->showcredits();
         echo '</div>';

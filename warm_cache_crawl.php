@@ -11,9 +11,14 @@ if(defined('WC_CALLED'))
 
 	$timer = new warm_cache_timer();
 	$timer->start();
+
+	$output_format = strip_tags(get_query_var('warm_cache_export_type'));
 	
-	//FIXME: Export output type. Add options to select
-	$output_format = 'xml';
+	//If output format is invalid, default to html
+	if($output_format == '' || !$warm_cache->template->template_exists("cron/{$output_format}"))
+	{
+		$output_format = 'html';
+	}
 	
 	@set_time_limit(0);
 	
@@ -48,7 +53,6 @@ if(defined('WC_CALLED'))
 	$crawl_data = $warm_cache->process_sitemap($sitemap_url, $output_format);
 	
 	echo $warm_cache->template->show("cron/{$output_format}", array('crawl_data' => $crawl_data, 'elapsed_time' => $timer->get(8)));
-	
 
 	$newvalue['pages_count'] = sizeof($crawl_data);
 	$newvalue['time'] = $timer->get(2);

@@ -32,8 +32,12 @@ class warm_cache extends mijnpress_plugin_framework
 		if(!class_exists('MicroTemplate_v2') && !class_exists('MT_v2'))
 			include('lib/microtemplate.class.php');		
 		
+		/**
+		 * Init class dependencies
+		 */		
 		include('lib/warm_cache_logger.class.php');
 		include('lib/warm_cache_timer.class.php');
+		include('lib/warm_cache_sanitizer.class.php');
 		
 		//Register template directory by getting directory of current file
 		$this->template = new MicroTemplate_v2(dirname(__FILE__).'/templates/');
@@ -46,6 +50,8 @@ class warm_cache extends mijnpress_plugin_framework
 	{
 		//Create stats data 
 		add_option('plugin_warm_cache_statdata', array());
+		
+		//TODO: Create other settings
 		
 		//Generate a random API password without special characters
 		add_option('plugin_warm_cache_api', wp_generate_password(9, false));
@@ -78,8 +84,10 @@ class warm_cache extends mijnpress_plugin_framework
 		$warm_cache_admin = new warm_cache();
 		$warm_cache_admin->plugin_title = 'Warm cache';
 		
-		$warm_cache_admin->content_start();
-		echo $warm_cache_admin->template->show('admin-head');
+		//Register settings
+		$warm_cache_admin->register_settings();
+		
+		echo $warm_cache_admin->template->show('admin-header');
 		
 		//FIXME: Continue here
 		//Check that everything is working out for us
@@ -91,9 +99,15 @@ class warm_cache extends mijnpress_plugin_framework
 				$warm_cache_admin->show_message($warm_cache_admin->template->show('prompt/sitemap-never-crawled', array('cron_url' => trailingslashit(get_bloginfo('url')).'?warm_cache='.get_option('plugin_warm_cache_api'))));
 			else
 				$warm_cache_admin->show_message($warm_cache_admin->template->show('table/crawled-totals-bottom', $stats));
-
+			
+			//Show settings form
+			echo $warm_cache_admin->template->show('forms/wrapper');
+			
 			echo $warm_cache_admin->template->show('table/crawled-wrapper', array('table_string' => $stats['table_string']));
 		}
+
+		
+		echo $warm_cache_admin->template->show('admin-footer');
 		
 		$warm_cache_admin->content_end();
 	}
@@ -167,7 +181,7 @@ class warm_cache extends mijnpress_plugin_framework
 	public function add_query_vars_filter($vars)
 	{
 		$vars[] = 'warm_cache';
-		$vars[] = 'wc';
+		$vars[] = 'warm_cache_export_type';
 		return $vars;
 	}
 	
@@ -176,6 +190,7 @@ class warm_cache extends mijnpress_plugin_framework
 	 */
 	function crawl()
 	{
+				
 		if(get_query_var('warm_cache') === get_option('plugin_warm_cache_api') || get_query_var('wc') === get_option('plugin_warm_cache_api'))
     	{
 			define('WC_CALLED', true);
@@ -193,6 +208,18 @@ class warm_cache extends mijnpress_plugin_framework
 		global $newvalue;
 		$xmldata = wp_remote_retrieve_body(wp_remote_get($sitemap_url));
 		$xml = simplexml_load_string($xmldata);
+		
+		/**
+		 * Load settings
+		 */
+		
+		$always_cache_frontpage = true;
+		$date_cutoff_enabled = true;
+		
+		//No older than the following date. 86400 = 1 day, 604800 = 1 week
+		$date_cutoff = 86400;
+		
+		$pages_to_always_cache = array('http://rheldev/wpdev/sample-paf23f23f/', 'http://rheldev/wpdev/view-test-page');
 	
 		$cnt = count($xml->url);
 		if($cnt > 0)
@@ -200,13 +227,34 @@ class warm_cache extends mijnpress_plugin_framework
 			for($i = 0;$i < $cnt;$i++)
 			{				
 				$page = (string)$xml->url[$i]->loc;
+				$last_modified_array = date_parse_from_format('Y-m-d\TH:i:s+00:00', $xml->url[$i]->lastmod);
 				
-				$logger->add(__("{$page}"));
+				//http://se1.php.net/date_create_from_format might be better, but PHP >=5.3 only
+				$year = $last_modified_array['year'];
+				$month = str_pad($last_modified_array['month'], 2, "0", STR_PAD_LEFT);
+				$day = str_pad($last_modified_array['day'], 2, "0", STR_PAD_LEFT);
 				
-				$newvalue['pages'][] = $page;
-				$tmp = wp_remote_get($page);
-				//TODO: Measure how long each page took with a new timer and send that data as well in ->get_array(); somehow...
-			}
+				$last_modified = "{$year}-{$month}-{$day}";
+				$last_modified_timestamp =  strtotime($last_modified);
+				
+				//Date cutoff functionality
+				if($date_cutoff_enabled)
+				{
+					if(time() - $last_modified_timestamp < $date_cutoff)
+					{
+						//TODO: Measure how long each page took with a new timer and send that data as well in ->get_array(); somehow...
+						$newvalue['pages'][] = $page;
+						$tmp = wp_remote_get($page);
+						$logger->add(__("{$page}"));
+					}				
+				}
+				else
+				{
+					$newvalue['pages'][] = $page;
+					$tmp = wp_remote_get($page);	
+					$logger->add(__("{$page}"));				
+				}				
+			}			
 		}
 		else
 		{
@@ -223,8 +271,103 @@ class warm_cache extends mijnpress_plugin_framework
 				}				
 			}
 		}
+
+		/** Always cache front page functionality **/
+		if($always_cache_frontpage)
+		{
+			//Check if frontpage has already been cached. If not, cache it.
+			if(!in_array($this->add_slash_to_url_if_needed(get_bloginfo('url')), $newvalue['pages']))
+			{
+				$newvalue['pages'][] = $this->add_slash_to_url_if_needed(get_bloginfo('url'));
+				$tmp = wp_remote_get($this->add_slash_to_url_if_needed(get_bloginfo('url')));	
+				$logger->add(__("{$page}"));							
+			}
+		}		
+		
+		/** Fetch pages that are set to always be cached **/
+		foreach($pages_to_always_cache as $page_to_always_cache)
+		{
+			$newvalue['pages'][] = $page_to_always_cache;
+			$tmp = wp_remote_get($page_to_always_cache);
+			$logger->add(__("{$page}"));			
+		}
 		
 		return $logger->get_array();
+	}
+	
+	/** Register plugin settings **/
+	public function register_settings()
+	{
+		//register_setting('warm-cache-group', 'warm_cache_always_cache_frontpage' , array('warm_cache_sanitizer','sanitize_form_checkbox'));
+		//register_setting('warm-cache-group', 'warm_cache_date_cutoff_enabled', array('warm_cache_sanitizer','sanitize_form_checkbox') );	
+		//register_setting('warm-cache-group', 'warm_cache_date_cutoff', array('warm_cache_sanitizer','sanitize_form_integer') );
+		//register_setting('warm-cache-group', 'plugin_warm_cache_api', array('warm_cache_sanitizer','sanitize_form_string') );		
+		register_setting('warm-cache-group', 'warm_cache_pages_to_always_cache', array('warm_cache', 'sanitize_form_string') );	
+		 
+		add_settings_section( 'warm-cache-main', __('Main configuration'), array(&$this,'admin_main_part'), 'warm-cache' );
+		
+		//add_settings_field( 'warm_cache_always_cache_frontpage', __('Selected theme'), array(&$this,'field_warm_cache_always_cache_frontpage'), 'warm-cache', 'warm-cache-main');
+		//add_settings_field( 'warm_cache_date_cutoff_enabled', __('Custom CSS'), array(&$this,'field_warm_cache_date_cutoff_enabled'), 'warm-cache', 'warm-cache-main');
+		//add_settings_field( 'warm_cache_date_cutoff', __('Selected theme'), array(&$this,'field_warm_cache_date_cutoff'), 'warm-cache', 'warm-cache-main');
+		//add_settings_field( 'plugin_warm_cache_api', __('Selected theme'), array(&$this,'field_plugin_warm_cache_api'), 'warm-cache', 'warm-cache-main');
+		add_settings_field( 'warm_cache_pages_to_always_cache', __('URLs to always cache'), array(&$this,'field_warm_cache_pages_to_always_cache'), 'warm-cache', 'warm-cache-main');
+	}
+
+	/**
+	 * Basic boolean sanitizing
+	 */
+	function sanitize_form_checkbox($in)
+	{
+		if($in != "true")
+			return "false";
+	}
+	
+	/**
+	 * Basic int sanitizing
+	 */
+	 function sanitize_form_integer($in)
+	 {
+	 	return (int)$in;
+	 }
+	 
+	 /**
+	  * Basic string sanitizing
+	  * 
+	  * NOTE: Disallows HTML tags.
+	  */
+	 function sanitize_form_string($in)
+	 {
+	 	return strip_tags($in);
+	 }
+	
+	/** Fields **/
+	function admin_main_part()
+	{
+	}	
+	
+	function field_warm_cache_pages_to_always_cache()
+	{
+		echo $this->template->show('forms/fields/pages_to_always_cache');
+	}
+
+	function field_warm_cache_always_cache_frontpage()
+	{
+		echo $this->template->show('forms/fields/always_cache_frontpage');
+	}
+	
+	function field_warm_cache_date_cutoff_enabled()
+	{
+		echo $this->template->show('forms/fields/date_cutoff_enabled');
+	}
+	
+	function field_warm_cache_date_cutoff()
+	{
+		echo $this->template->show('forms/fields/date_cutoff');
+	}
+	
+	function field_plugin_warm_cache_api()
+	{
+		echo $this->template->show('forms/fields/warm_cache_api');
 	}
 	
 	/**
@@ -246,6 +389,17 @@ class warm_cache extends mijnpress_plugin_framework
 			}
 		}
 	}
+	
+	/**
+	 * Adds a final slash to an URL, if needed
+	 */
+	function add_slash_to_url_if_needed($url)
+	{
+		if(substr($url, -1) != '/')
+			return $url.'/';
+		else
+			return $url;
+	}
 }
 
 /**
@@ -260,4 +414,6 @@ register_activation_hook( __FILE__, array( 'warm_cache', 'activate' ) );
 load_plugin_textdomain('plugin_warm_cache', false, basename( dirname( __FILE__ ) ) . '/languages' );
 
 add_action('admin_menu', array('warm_cache', 'addPluginSubMenu'));
+add_action( 'admin_init', array('warm_cache', 'register_settings'));
+
 add_filter('plugin_row_meta', array('warm_cache', 'addPluginContent'), 10, 2);

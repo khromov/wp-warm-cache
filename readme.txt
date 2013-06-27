@@ -1,5 +1,5 @@
 === Warm Cache ===
-Contributors: ramon fincken
+Contributors: ramon fincken, khromov
 Tags: cache, warm, keep, xml, sitemap, load, speed, quick, tag, w3tc, optimize, page cache, preload, google, pagespeed, webmaster
 Requires at least: 3.5
 Tested up to: 3.5.2

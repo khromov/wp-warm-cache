@@ -88,6 +88,17 @@
 
 			return ob_get_clean();			
 		}
+
+		/**
+		 * Checks if a template exists
+		 */
+		function template_exists($template_name, $prefix = null)
+		{
+			if(is_null($prefix))
+				$prefix = $this->prefix;
+			
+			return file_exists($prefix.$template_name.'.php');
+		}
 		
 		/** Shorthand functions **/
 		
@@ -131,7 +142,7 @@
 		function is_associative_array($array)
 		{
 			return (bool)count(array_filter(array_keys($array), 'is_string'));
-		}	
+		}
 	}
 	
 	/**
