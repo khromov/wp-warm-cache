@@ -212,7 +212,6 @@ class warm_cache extends mijnpress_plugin_framework
 		/**
 		 * Load settings
 		 */
-		
 		$always_cache_frontpage = true;
 		$date_cutoff_enabled = true;
 		
@@ -276,11 +275,12 @@ class warm_cache extends mijnpress_plugin_framework
 		if($always_cache_frontpage)
 		{
 			//Check if frontpage has already been cached. If not, cache it.
-			if(!in_array($this->add_slash_to_url_if_needed(get_bloginfo('url')), $newvalue['pages']))
+			if(!in_array($this->add_slash_to_url_if_needed(get_bloginfo('url')), ($newvalue['pages'] !== NULL ? $newvalue['pages'] : array())))
 			{
-				$newvalue['pages'][] = $this->add_slash_to_url_if_needed(get_bloginfo('url'));
-				$tmp = wp_remote_get($this->add_slash_to_url_if_needed(get_bloginfo('url')));	
-				$logger->add(__("{$page}"));							
+				$start_page_url = get_bloginfo('url');
+				$newvalue['pages'][] = $this->add_slash_to_url_if_needed($start_page_url);
+				$tmp = wp_remote_get($this->add_slash_to_url_if_needed($start_page_url));	
+				$logger->add(__("{$start_page_url}"));							
 			}
 		}		
 		
@@ -289,7 +289,7 @@ class warm_cache extends mijnpress_plugin_framework
 		{
 			$newvalue['pages'][] = $page_to_always_cache;
 			$tmp = wp_remote_get($page_to_always_cache);
-			$logger->add(__("{$page}"));			
+			$logger->add(__("{$page_to_always_cache}"));			
 		}
 		
 		return $logger->get_array();
